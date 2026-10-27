@@ -53,7 +53,7 @@ export default [
     rules: importRules,
   },
   {
-    files: ["tests/**/*.ts", "vitest.config.ts"],
+    files: ["tests/**/*.ts", "examples/**/*.ts", "vitest.config.ts"],
     languageOptions: {
       parser: tsParser,
     },

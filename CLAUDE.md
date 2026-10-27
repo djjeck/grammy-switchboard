@@ -25,6 +25,10 @@ src/
   logger.ts        — the injected Logger interface and the silent default
 tests/              — one *.test.ts per area; botApi.ts stubs the Bot API through an API
                      transformer; memoryStore.ts is a test-only asynchronous store
+examples/
+  ping/bot.ts      — a store-less bot: /ping and an inline-button round trip. Imports the package
+                     by its own name (Node's self-reference, so it resolves to dist/: build
+                     first); not published, not in coverage
 ```
 
 ## Local validation
@@ -35,7 +39,9 @@ source ~/.nvm/nvm.sh && nvm use && npm run validate && npm run test:coverage
 
 `validate` runs `build → test → typecheck → lint:fix → format`; it is the gate before every
 commit. Coverage (100% on every metric, `vitest.config.ts`) is a separate script. `typecheck`
-covers `src/` and `tests/` (`tsconfig.json`); `build` emits `src/` only (`tsconfig.build.json`).
+covers `src/`, `tests/` and `examples/` (`tsconfig.json`, whose `paths` point the package's own
+name at `src/` so the examples typecheck without a build); `build` emits `src/` only
+(`tsconfig.build.json`).
 No Docker.
 
 ## Conventions

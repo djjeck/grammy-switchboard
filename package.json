@@ -47,8 +47,8 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "lint": "eslint src tests",
-    "lint:fix": "eslint --fix src tests",
+    "lint": "eslint src tests examples",
+    "lint:fix": "eslint --fix src tests examples",
     "validate": "npm run build && npm run test && npm run typecheck && npm run lint:fix && npm run format",
     "prepack": "npm run build"
   },

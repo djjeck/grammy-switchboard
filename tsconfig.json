@@ -8,7 +8,12 @@
     "erasableSyntaxOnly": true,
     "verbatimModuleSyntax": true,
     "skipLibCheck": true,
-    "noEmit": true
+    "noEmit": true,
+    // The examples import the package by name, as a consumer does; typechecked against src/.
+    "paths": {
+      "grammy-switchboard": ["./src/index.ts"],
+      "grammy-switchboard/sqlite": ["./src/sqlite.ts"]
+    }
   },
-  "include": ["src", "tests", "vitest.config.ts"]
+  "include": ["src", "tests", "examples", "vitest.config.ts"]
 }
