@@ -1,0 +1,15 @@
+default: true
+
+# Plan docs and tables routinely exceed 80 chars
+MD013:
+  line_length: 200
+  tables: false
+
+# Allow lists without surrounding blank lines
+MD032: false
+
+# Allow trailing punctuation in headings
+MD026: false
+
+# Allow bare URLs
+MD034: false

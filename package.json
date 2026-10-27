@@ -1,0 +1,68 @@
+{
+  "name": "grammy-switchboard",
+  "version": "0.1.0",
+  "description": "A grammY plugin that routes a bot's Telegram topics, replies and buttons to typed handlers",
+  "license": "MIT",
+  "author": "djjeck",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/djjeck/grammy-switchboard.git"
+  },
+  "homepage": "https://github.com/djjeck/grammy-switchboard#readme",
+  "bugs": "https://github.com/djjeck/grammy-switchboard/issues",
+  "keywords": [
+    "grammy",
+    "grammy-plugin",
+    "telegram",
+    "telegram-bot",
+    "forum-topics",
+    "inline-keyboard"
+  ],
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "rm -rf dist && tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint src tests",
+    "lint:fix": "eslint --fix src tests",
+    "validate": "npm run build && npm run test && npm run typecheck && npm run lint:fix && npm run format",
+    "prepack": "npm run build"
+  },
+  "peerDependencies": {
+    "grammy": "^1.46.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.72.0",
+    "@typescript-eslint/parser": "^8.72.0",
+    "@vitest/coverage-v8": "^5.0.5",
+    "eslint": "^9.39.4",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-simple-import-sort": "^14.0.0",
+    "eslint-plugin-unused-imports": "^4.4.1",
+    "grammy": "^1.46.0",
+    "prettier": "^3.4.0",
+    "typescript": "^6.0.0",
+    "vitest": "^5.0.0"
+  }
+}

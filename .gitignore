@@ -1,0 +1,19 @@
+# Node
+node_modules/
+dist/
+*.tsbuildinfo
+*.tgz
+
+# Testing
+.vitest/
+coverage/
+
+# Local databases and secrets
+*.db
+*.db-*
+.env
+.env.*
+
+# IDE
+.idea/
+.vscode/
