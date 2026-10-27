@@ -59,7 +59,8 @@ Releases are published by GitHub Actions, never from a laptop (except the first,
 2. Turn the CHANGELOG's `Unreleased` section into `## [X.Y.Z] - YYYY-MM-DD`, with its link at the
    bottom.
 3. Commit, then tag `vX.Y.Z` on that commit and push the commit and the tag.
-   `release.yml` runs the checks, refuses a tag that doesn't match `package.json`, and publishes.
+   `release.yml` runs the checks, refuses a tag that doesn't match `package.json`, and publishes,
+   unless that version is already on npm (as the first one is), which it leaves alone.
 
 The first release is manual: npm can only attach a trusted publisher to a package that exists,
 so the owner publishes the first version by hand and then configures the trusted publisher on
