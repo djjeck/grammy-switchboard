@@ -18,6 +18,7 @@ src/
   callbackData.ts  — a button's callback_data: inline wire format v1 (`~`), or a store's id
   store.ts         — the store interface (messages for lineage, stored buttons) and the lineage
                      walk over it
+  sqlite.ts        — the `grammy-switchboard/sqlite` entry: SqliteStore on better-sqlite3
   format.ts        — Markdown sent as Telegram HTML, resent as plain text if Telegram rejects it
   markdown.ts      — the Markdown → Telegram HTML converter
   errors.ts        — UnknownTopicError, ButtonTooLongError
@@ -43,7 +44,8 @@ No Docker.
 - `erasableSyntaxOnly`: no enums, namespaces or parameter properties, so the sources run under
   Node's type stripping as they are. Published as compiled JavaScript with `.d.ts` files, since
   Node never strips types under `node_modules`.
-- Runtime dependencies: none. `grammy` is a peer dependency.
+- Runtime dependencies: none. `grammy` is a peer dependency; `better-sqlite3` an optional peer,
+  imported only by `src/sqlite.ts` (a test checks the main entry never loads it).
 - Tests never reach Telegram: a real grammY `Bot` with `botInfo` set, every API call answered by
   the transformer in `tests/botApi.ts`. Examples use neutral data (topics like `ops`, chat ids
   like `-100123`), never real chats, tokens or people.
@@ -124,3 +126,10 @@ No Docker.
   the download URL embeds the bot token, so it is never returned and is redacted from errors.
 - **The logger is injected** (`info`, `warn`, `error`, each with a message and fields), silent if
   none is given; the library never writes to the console itself.
+- **The SQLite store's schema** is `messages` keyed `(chat_id, message_id)` and
+  `button_callbacks` keyed `callback_id`, created if missing. It opens an existing database with
+  those tables as is and leaves any other table alone, so it can share a database with its
+  application (given an open `better-sqlite3` database, it doesn't close it). A `messages` table
+  of an older shape (no `chat_id`) is refused rather than migrated. The schema is to be reviewed
+  before 1.0 (for example, rows keyed by a topic name a consumer may rename); a change ships as a
+  migration in the store.

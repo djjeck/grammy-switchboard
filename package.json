@@ -24,6 +24,10 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
+    "./sqlite": {
+      "types": "./dist/sqlite.d.ts",
+      "default": "./dist/sqlite.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [
@@ -49,13 +53,21 @@
     "prepack": "npm run build"
   },
   "peerDependencies": {
+    "better-sqlite3": "^12.0.0",
     "grammy": "^1.46.0"
   },
+  "peerDependenciesMeta": {
+    "better-sqlite3": {
+      "optional": true
+    }
+  },
   "devDependencies": {
+    "@types/better-sqlite3": "^9.6.0",
     "@types/node": "^24.0.0",
     "@typescript-eslint/eslint-plugin": "^8.72.0",
     "@typescript-eslint/parser": "^8.72.0",
     "@vitest/coverage-v8": "^5.0.5",
+    "better-sqlite3": "^12.4.1",
     "eslint": "^9.39.4",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-simple-import-sort": "^14.0.0",
@@ -64,5 +76,8 @@
     "prettier": "^3.4.0",
     "typescript": "^6.0.0",
     "vitest": "^5.0.0"
+  },
+  "allowScripts": {
+    "better-sqlite3": true
   }
 }

@@ -9,3 +9,4 @@ All notable changes to this project are documented here. The project follows
 
 - `Switchboard`, a grammY plugin: topics, commands, reply lineage, inline and stored buttons,
   typed inbound events, and outbound send, edit, delete, typing and command menus.
+- `grammy-switchboard/sqlite`: a SQLite store on `better-sqlite3`.
