@@ -6,6 +6,26 @@ the ref of the conversation it belongs to, and who sent it. Extracted from a pri
 service that ran the same code in production; this repo starts clean and holds nothing of that
 service's deployment.
 
+## Repository layout
+
+```text
+src/
+  index.ts         — the main entry (`grammy-switchboard`): everything public except the store
+  switchboard.ts   — the Switchboard: a grammY MiddlewareObj (inbound: updates → events for the
+                     handlers given with `on`) and the outbound methods (send, edit, delete,
+                     typing, command menus, fetchFile)
+  events.ts        — the inbound events (command, message, reply, button, photo), camelCase
+  callbackData.ts  — a button's callback_data: inline wire format v1 (`~`), or a store's id
+  store.ts         — the store interface (messages for lineage, stored buttons) and the lineage
+                     walk over it
+  format.ts        — Markdown sent as Telegram HTML, resent as plain text if Telegram rejects it
+  markdown.ts      — the Markdown → Telegram HTML converter
+  errors.ts        — UnknownTopicError, ButtonTooLongError
+  logger.ts        — the injected Logger interface and the silent default
+tests/              — one *.test.ts per area; botApi.ts stubs the Bot API through an API
+                     transformer; memoryStore.ts is a test-only asynchronous store
+```
+
 ## Local validation
 
 ```sh
@@ -29,3 +49,78 @@ No Docker.
   like `-100123`), never real chats, tokens or people.
 - Semver, on 0.x until the API has been tried by its first consumers: a 0.x minor may break the
   API. Every release gets a `CHANGELOG.md` entry.
+
+## Key design decisions
+
+- **A plugin, not a wrapper.** The consumer owns the `Bot`: creates it, installs API
+  transformers (such as `@grammyjs/auto-retry`), starts it and retries a failed start. The
+  switchboard is installed with `bot.use(switchboard)` and makes outbound calls through the `Api`
+  it is given (`bot.api`). The library has no startup or retry code.
+- **A `MiddlewareObj`, not a `Composer` subclass.** `bot.use` accepts any object with a
+  `middleware()` method. Extending `Composer` would put its `on(filterQuery)` and the
+  switchboard's `on(eventType)` under one name with different meanings, and expose `Composer`'s
+  whole surface as if it were the switchboard's. An internal `Composer` does the filtering.
+- **It takes only what it delivers.** An update is taken when it becomes an event that has at
+  least one handler; everything else goes to `next()`: updates from a chat or thread with no
+  topic, edited messages and other update types, messages while `messages` is off, an event type
+  nobody registered a handler for, and button presses whose data isn't the switchboard's. So the
+  consumer's own grammY handlers, and other plugins' buttons, work alongside it.
+- **Commands only, by default.** Without `messages: true`, only registered commands and presses
+  of the switchboard's own buttons are delivered, and nothing is recorded for other messages, so
+  in a group with privacy mode off other people's messages never reach the switchboard's
+  handlers. The gate covers only what the switchboard delivers. With messages on, an unregistered
+  `/word` arrives as a `message`. A command is `/cmd` or `/cmd@ThisBot` (`ctx.me.username`), at
+  the start of the message; one addressed to another bot is not a command.
+- **Topics.** A topic is a chat id and an optional forum thread id. A message matches the topic
+  with its chat and thread. Telegram also sets `message_thread_id` on a reply in a group without
+  forum topics (to the replied-to message), so a message that isn't in a forum topic
+  (`is_topic_message` unset) and matches no thread falls back to its chat's topic with no thread.
+- **Commands are per topic, in memory.** Given in the options and replaced with `setCommands`
+  (the consumer persists them if it wants). Telegram scopes a command menu per chat, not per forum
+  topic, so a chat's menu merges its topics' commands, the first description of a duplicate
+  winning; it is set in chat scope (`setMyCommands`, or `deleteMyCommands` when empty).
+  `registerCommandMenus` sets every chat's and logs a chat that fails; `registerCommandMenu(topic)`
+  sets one and throws, for a caller that reports the failure.
+- **Reply lineage.** Telegram reports only a reply's immediate parent, so the store keeps each
+  sent message (chat id, message id, topic, ref, parent) and a person's reply or photo whose
+  parent is stored (with no ref of its own); the ref is found by walking up the parents, so a
+  chain of any depth keeps its ref. Messages are keyed by chat and id, since Telegram numbers
+  them per chat. A reply to an unknown message (someone else's, or the forum-topic creation
+  message Telegram sets on every message in a topic) is never stored, nor is a plain message or a
+  command. The link is written before the event is delivered, so a failing handler can't break
+  routing for later replies, and a redelivered update writes the same row. A send with `replyTo`
+  is recorded with that parent (and its own ref, which wins over the parent's). Without a store
+  there is no lineage: a reply arrives as a plain `message`.
+- **Buttons carry themselves when they fit.** `callback_data` is 1-64 bytes of UTF-8. Wire format
+  version 1, which must not change byte for byte: `~<topic bytes>:<topic><ref bytes>:<ref><action>`,
+  or `-` in place of the ref's length and value for no ref (an empty ref is `0:`); lengths are
+  canonical decimal UTF-8 byte counts, so any character can be in any field, and the action is
+  the rest. The topic is in the data because a press on a message the bot can no longer access
+  carries no thread id. Anything longer is kept by the store under an id (the SQLite store's are
+  16 characters of base64url); `~` is outside base64url, and a store's id may not start with it,
+  so the forms can't be confused. A later format takes another character outside base64url and
+  keeps decoding `~`. Decoding is strict (fatal UTF-8). Without a store, a button that doesn't fit
+  throws `ButtonTooLongError` before anything is sent. Buttons never expire: a button works as
+  long as its message exists, and a caller ends it by editing the keyboard away.
+- **Button presses.** A press of the switchboard's own button (for a registered topic, with a
+  `button` handler) is answered before the handlers run, so the client's spinner stops however
+  long they take; a failed answer (a press too old after a restart) is logged and the press still
+  delivered. Data in the `~` format that doesn't decode is logged; any other unknown data passes
+  on silently, as it may be another plugin's.
+- **Handler errors propagate.** Handlers run in order and are awaited, so a slow handler holds
+  back the bot's next update as any middleware does. An error is not caught: grammY hands it to
+  the consumer's `bot.catch`, which decides whether to log it or stop.
+- **Events are camelCase** (`messageId`, `mediaGroupId`, `fileId`) and carry `topic` and `from`;
+  `reply`, `button` and `photo` carry `ref` (null when none). `command` and `message` carry no
+  ref: a message is by definition in no chain. Each handler also gets the grammY context.
+- **Sending.** Text, a photo (a URL, a `file_id` or an `InputFile` upload), or an album of 2-10
+  (captioned on its first photo, no buttons). Markdown is converted to Telegram HTML, which needs
+  only `<`, `>` and `&` escaped, and resent as plain text if Telegram can't parse it. `replyTo` is
+  sent as `reply_parameters` with `allow_sending_without_reply`, so a deleted parent doesn't cost
+  the message. A send returns the message ids and, for each photo, the `file_id` Telegram
+  assigned, so a caller can resend it without uploading again. An edit keeps the ref the message
+  was sent with unless given a new one, which then becomes the message's.
+- **Files are fetched in-process.** `fetchFile(fileId)` calls `getFile` and downloads the bytes;
+  the download URL embeds the bot token, so it is never returned and is redacted from errors.
+- **The logger is injected** (`info`, `warn`, `error`, each with a message and fields), silent if
+  none is given; the library never writes to the console itself.
