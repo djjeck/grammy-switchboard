@@ -29,6 +29,11 @@ examples/
   ping/bot.ts      — a store-less bot: /ping and an inline-button round trip. Imports the package
                      by its own name (Node's self-reference, so it resolves to dist/: build
                      first); not published, not in coverage
+.github/workflows/
+  ci.yml           — on every push to a branch and every PR: format, lint, typecheck, build,
+                     tests at 100% coverage (also called by release.yml)
+  release.yml      — on a `v*` tag: the CI checks, the tag against package.json's version,
+                     then `npm publish` through npm trusted publishing, with provenance
 ```
 
 ## Local validation
@@ -42,7 +47,24 @@ commit. Coverage (100% on every metric, `vitest.config.ts`) is a separate script
 covers `src/`, `tests/` and `examples/` (`tsconfig.json`, whose `paths` point the package's own
 name at `src/` so the examples typecheck without a build); `build` emits `src/` only
 (`tsconfig.build.json`).
-No Docker.
+No Docker. CI (`.github/workflows/ci.yml`) runs `format:check`, `lint`, `typecheck`, `build`
+and `test:coverage`, so `validate`'s fixes must be committed.
+
+## Releasing
+
+Releases are published by GitHub Actions, never from a laptop (except the first, below):
+
+1. Bump `version` in `package.json` (`npm version X.Y.Z --no-git-tag-version`, which updates the
+   lockfile too), following semver (on 0.x a minor may break the API).
+2. Turn the CHANGELOG's `Unreleased` section into `## [X.Y.Z] - YYYY-MM-DD`, with its link at the
+   bottom.
+3. Commit, then tag `vX.Y.Z` on that commit and push the commit and the tag.
+   `release.yml` runs the checks, refuses a tag that doesn't match `package.json`, and publishes.
+
+The first release is manual: npm can only attach a trusted publisher to a package that exists,
+so the owner publishes the first version by hand and then configures the trusted publisher on
+npmjs.com, as the comment at the top of `release.yml` describes. No npm token is ever stored in
+the repository's secrets.
 
 ## Conventions
 

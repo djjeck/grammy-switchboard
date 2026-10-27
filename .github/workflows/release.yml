@@ -1,0 +1,50 @@
+# Publishes a version to npm when its tag (vX.Y.Z) is pushed, after the same checks as CI.
+#
+# It publishes through npm's trusted publishing: the job proves it is this workflow in this
+# repository with a short-lived GitHub OIDC token, so no npm token is stored as a secret, and npm
+# attaches provenance to the version.
+#
+# One-time setup, before the first tag is pushed:
+#   1. The owner publishes the first version by hand (`npm publish --access public`), since a
+#      trusted publisher can only be configured on a package that exists.
+#   2. On npmjs.com, the package's Settings → Trusted publishing → GitHub Actions: owner
+#      `djjeck`, repository `grammy-switchboard`, workflow `release.yml`, no environment.
+# Every later version is published by pushing its tag.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    uses: ./.github/workflows/ci.yml
+
+  publish:
+    needs: check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          registry-url: https://registry.npmjs.org
+          cache: npm
+      - name: Check the tag matches package.json's version
+        run: |
+          version="v$(node -p 'require("./package.json").version')"
+          if [ "$GITHUB_REF_NAME" != "$version" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME doesn't match package.json's version ($version)"
+            exit 1
+          fi
+      # Trusted publishing needs npm 11.5.1 or later; Node's bundled npm may be older.
+      - run: npm install -g npm@^11.5.1
+      - run: npm ci
+      # prepack builds dist/ before packing.
+      - run: npm publish --provenance --access public
