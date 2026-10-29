@@ -4,6 +4,14 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project follows
 [Semantic Versioning](https://semver.org/); while it is on 0.x, a minor release may break the API.
 
+## [Unreleased]
+
+### Added
+
+- `entities` on `message` and `reply` events and `captionEntities` on `photo` events: Telegram's
+  entities as sent, so a hidden link's URL (a `text_link`) reaches the handler (#3).
+- `inlineLinks(text, entities?)`, which writes each hidden link into the text as `[label](url)`.
+
 ## [0.1.0] - 2026-10-27
 
 The first release.

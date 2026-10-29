@@ -589,6 +589,7 @@ export class Switchboard<C extends Context = Context> implements MiddlewareObj<C
             topic,
             ref: lineage.ref,
             text: message.text,
+            entities: message.entities,
             messageId: message.message_id,
             from: sender(message.from),
           }
@@ -596,6 +597,7 @@ export class Switchboard<C extends Context = Context> implements MiddlewareObj<C
             type: "message",
             topic,
             text: message.text,
+            entities: message.entities,
             messageId: message.message_id,
             from: sender(message.from),
           };
@@ -622,6 +624,7 @@ export class Switchboard<C extends Context = Context> implements MiddlewareObj<C
         ref: lineage?.ref ?? null,
         fileId: largest.file_id,
         caption: message.caption,
+        captionEntities: message.caption_entities,
         messageId: message.message_id,
         mediaGroupId: message.media_group_id,
         from: sender(message.from),

@@ -15,6 +15,8 @@ src/
                      handlers given with `on`) and the outbound methods (send, edit, delete,
                      typing, command menus, fetchFile)
   events.ts        — the inbound events (command, message, reply, button, photo), camelCase
+  entities.ts      — inlineLinks: a message's hidden links (text_link entities) written into
+                     its text as Markdown
   callbackData.ts  — a button's callback_data: inline wire format v1 (`~`), or a store's id
   store.ts         — the store interface (messages for lineage, stored buttons) and the lineage
                      walk over it
@@ -144,6 +146,11 @@ the repository's secrets.
 - **Events are camelCase** (`messageId`, `mediaGroupId`, `fileId`) and carry `topic` and `from`;
   `reply`, `button` and `photo` carry `ref` (null when none). `command` and `message` carry no
   ref: a message is by definition in no chain. Each handler also gets the grammY context.
+- **Text keeps its entities.** `message` and `reply` carry `entities`, `photo` carries
+  `captionEntities`, as Telegram sent them; `text` and `caption` are never rewritten. A hidden
+  link's URL is only in its `text_link` entity, so without them a handler that forwards text on
+  loses every such link; `inlineLinks` writes them into the text as `[label](url)` for one that
+  wants a string.
 - **Sending.** Text, a photo (a URL, a `file_id` or an `InputFile` upload), or an album of 2-10
   (captioned on its first photo, no buttons). Markdown is converted to Telegram HTML, which needs
   only `<`, `>` and `&` escaped, and resent as plain text if Telegram can't parse it. `replyTo` is

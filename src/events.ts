@@ -4,6 +4,8 @@
  * the handler's grammY context.
  */
 
+import { type MessageEntity } from "grammy/types";
+
 /**
  * Who sent an update: Telegram's user id as a string and a display name (first and last name,
  * else the username, else the id). Whether a sender is allowed is the handler's decision.
@@ -34,6 +36,12 @@ export interface MessageEvent {
   type: "message";
   topic: string;
   text: string;
+  /**
+   * Telegram's entities for `text`, as sent (left out when there are none): formatting, mentions,
+   * and links, including hidden ones (`text_link`) whose URL isn't in the text. `inlineLinks`
+   * writes those into the text.
+   */
+  entities?: MessageEntity[];
   messageId: number;
   from?: Sender;
 }
@@ -49,6 +57,12 @@ export interface ReplyEvent {
   /** The ref the chain's bot message was sent with; null when it was sent without one. */
   ref: string | null;
   text: string;
+  /**
+   * Telegram's entities for `text`, as sent (left out when there are none): formatting, mentions,
+   * and links, including hidden ones (`text_link`) whose URL isn't in the text. `inlineLinks`
+   * writes those into the text.
+   */
+  entities?: MessageEntity[];
   messageId: number;
   from?: Sender;
 }
@@ -78,6 +92,8 @@ export interface PhotoEvent {
   /** Telegram's `file_id`, to fetch the photo by (`fetchFile`) or send it again. */
   fileId: string;
   caption?: string;
+  /** Telegram's entities for `caption`, as for a message's `entities`. */
+  captionEntities?: MessageEntity[];
   messageId: number;
   mediaGroupId?: string;
   from?: Sender;

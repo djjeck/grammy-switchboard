@@ -365,6 +365,40 @@ describe("messages and replies", () => {
     expect(store.messages.size).toBe(0);
   });
 
+  it("carries a message's and a reply's entities, hidden links included", async () => {
+    await store.recordMessage({
+      chatId: GROUP,
+      messageId: 5,
+      topic: "ops",
+      ref: "incident:1",
+      parentMessageId: null,
+    });
+    const entities = [{ type: "text_link", offset: 4, length: 4, url: "https://example.com" }];
+    const { bot } = setup();
+    await bot.handleUpdate(textUpdate("see docs", { entities }));
+    await bot.handleUpdate(textUpdate("see docs", { entities, ...parentOf(5) }));
+
+    expect(events).toEqual([
+      {
+        type: "message",
+        topic: "ops",
+        text: "see docs",
+        entities,
+        messageId: 10,
+        from: { id: "7", name: "Ada" },
+      },
+      {
+        type: "reply",
+        topic: "ops",
+        ref: "incident:1",
+        text: "see docs",
+        entities,
+        messageId: 10,
+        from: { id: "7", name: "Ada" },
+      },
+    ]);
+  });
+
   it("passes on messages, replies and photos with messages off, storing nothing", async () => {
     await store.recordMessage({
       chatId: GROUP,
@@ -581,6 +615,27 @@ describe("photos", () => {
         caption: "the rack",
         messageId: 20,
         mediaGroupId: "album1",
+        from: { id: "7", name: "Ada" },
+      },
+    ]);
+  });
+
+  it("carries the caption's entities", async () => {
+    const captionEntities = [
+      { type: "text_link", offset: 4, length: 4, url: "https://example.com" },
+    ];
+    const { bot } = setup();
+    await bot.handleUpdate(photoUpdate({ caption: "the rack", caption_entities: captionEntities }));
+
+    expect(events).toEqual([
+      {
+        type: "photo",
+        topic: "ops",
+        ref: null,
+        fileId: "large",
+        caption: "the rack",
+        captionEntities,
+        messageId: 20,
         from: { id: "7", name: "Ada" },
       },
     ]);
