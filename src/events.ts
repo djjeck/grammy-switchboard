@@ -4,6 +4,8 @@
  * the handler's grammY context.
  */
 
+import { type MessageEntity } from "grammy/types";
+
 /**
  * Who sent an update: Telegram's user id as a string and a display name (first and last name,
  * else the username, else the id). Whether a sender is allowed is the handler's decision.
@@ -11,6 +13,25 @@
 export interface Sender {
   id: string;
   name: string;
+}
+
+/**
+ * Where a forwarded message first came from. A user's `id` and `name` are as for a `Sender`, so a
+ * forward from someone the bot knows can be recognized; a group's or channel's are its chat id
+ * and title. A user who hides their account when forwarded (`hidden_user`) has only the name
+ * Telegram shows.
+ */
+export interface ForwardOrigin {
+  type: "user" | "hidden_user" | "chat" | "channel";
+  /** The user's or chat's id; left out for a hidden user. */
+  id?: string;
+  name: string;
+  /** Whether the user is a bot; only for `user`. */
+  isBot?: boolean;
+  /** The author's signature on a channel post, or an anonymous group admin's message. */
+  authorSignature?: string;
+  /** When the original was sent, in Unix seconds. */
+  date: number;
 }
 
 /** A command the topic registered, typed at the start of a message (`/status`, `/status@Bot`). */
@@ -34,8 +55,16 @@ export interface MessageEvent {
   type: "message";
   topic: string;
   text: string;
+  /**
+   * Telegram's entities for `text`, as sent (left out when there are none): formatting, mentions,
+   * and links, including hidden ones (`text_link`) whose URL isn't in the text. `inlineLinks`
+   * writes those into the text.
+   */
+  entities?: MessageEntity[];
   messageId: number;
   from?: Sender;
+  /** Set when the message is a forward: where it first came from (`from` forwarded it). */
+  forwardedFrom?: ForwardOrigin;
 }
 
 /**
@@ -49,8 +78,16 @@ export interface ReplyEvent {
   /** The ref the chain's bot message was sent with; null when it was sent without one. */
   ref: string | null;
   text: string;
+  /**
+   * Telegram's entities for `text`, as sent (left out when there are none): formatting, mentions,
+   * and links, including hidden ones (`text_link`) whose URL isn't in the text. `inlineLinks`
+   * writes those into the text.
+   */
+  entities?: MessageEntity[];
   messageId: number;
   from?: Sender;
+  /** Set when the message is a forward: where it first came from (`from` forwarded it). */
+  forwardedFrom?: ForwardOrigin;
 }
 
 /** A press of one of the switchboard's own inline buttons. */
@@ -78,9 +115,13 @@ export interface PhotoEvent {
   /** Telegram's `file_id`, to fetch the photo by (`fetchFile`) or send it again. */
   fileId: string;
   caption?: string;
+  /** Telegram's entities for `caption`, as for a message's `entities`. */
+  captionEntities?: MessageEntity[];
   messageId: number;
   mediaGroupId?: string;
   from?: Sender;
+  /** Set when the photo is a forward, as for a message. */
+  forwardedFrom?: ForwardOrigin;
 }
 
 export type InboundEvent = CommandEvent | MessageEvent | ReplyEvent | ButtonEvent | PhotoEvent;

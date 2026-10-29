@@ -237,17 +237,37 @@ sender, as for a channel post). A `Sender` is `{ id: string; name: string }`: th
 as a string, and their first and last name, else username, else id. Whether a sender is allowed
 is your handler's call.
 
-| Event          | Fields                                                                                      | Delivered                             |
-| -------------- | ------------------------------------------------------------------------------------------- | ------------------------------------- |
-| `CommandEvent` | `command` (lowercased, no slash or `@bot`), `args` (the rest, trimmed), `messageId`         | Always, for registered commands       |
-| `MessageEvent` | `text`, `messageId`                                                                         | With `messages: true`                 |
-| `ReplyEvent`   | `ref: string \| null`, `text`, `messageId`                                                  | With `messages: true` and a store     |
-| `ButtonEvent`  | `ref: string \| null`, `action`, `messageId?` (the button's message), `from` is the presser | Always, for the switchboard's buttons |
-| `PhotoEvent`   | `ref: string \| null`, `fileId` (largest size), `caption?`, `messageId`, `mediaGroupId?`    | With `messages: true`                 |
+| Event          | Fields                                                                                                                         | Delivered                             |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------- |
+| `CommandEvent` | `command` (lowercased, no slash or `@bot`), `args` (the rest, trimmed), `messageId`                                            | Always, for registered commands       |
+| `MessageEvent` | `text`, `entities?`, `messageId`, `forwardedFrom?`                                                                             | With `messages: true`                 |
+| `ReplyEvent`   | `ref: string \| null`, `text`, `entities?`, `messageId`, `forwardedFrom?`                                                      | With `messages: true` and a store     |
+| `ButtonEvent`  | `ref: string \| null`, `action`, `messageId?` (the button's message), `from` is the presser                                    | Always, for the switchboard's buttons |
+| `PhotoEvent`   | `ref: string \| null`, `fileId` (largest size), `caption?`, `captionEntities?`, `messageId`, `mediaGroupId?`, `forwardedFrom?` | With `messages: true`                 |
 
 An album's photos arrive as separate `photo` events sharing a `mediaGroupId`; only the first
 carries the caption. `InboundEvent` is the union of all five, `EventType` its `type`, and
 `EventOf<T>` the event of one type.
+
+`entities` and `captionEntities` are Telegram's `MessageEntity[]` for the text or caption, as
+sent, and left out when there are none. A link whose visible text isn't its URL (a word, or a
+citation marker like `[1]`) is a `text_link` entity there: its URL is nowhere in the text itself.
+
+A forwarded message or photo has `forwardedFrom: ForwardOrigin`, where it first came from (its
+`from` is whoever forwarded it): `type` (`"user"`, `"hidden_user"`, `"chat"` or `"channel"`),
+`id?` and `name` (a user's as for a `Sender`, so a forward from someone you know can be
+recognized; a group's or channel's chat id and title; a hidden user has only a name), `isBot?`
+(users only), `authorSignature?` and `date` (Unix seconds).
+
+#### `inlineLinks(text, entities?): string`
+
+Returns the text with each `text_link` written inline as Markdown, `[label](url)`, for a handler
+that passes messages on as text (to a model, a note, a log) and would otherwise lose the URLs.
+Bare URLs and other entities are left as they are, and labels aren't escaped.
+
+```ts
+switchboard.on("message", (event) => save(inlineLinks(event.text, event.entities)));
+```
 
 ### Outbound
 

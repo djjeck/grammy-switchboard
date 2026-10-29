@@ -1,3 +1,4 @@
+export { inlineLinks } from "./entities.js";
 export { ButtonTooLongError, UnknownTopicError } from "./errors.js";
 export type {
   ButtonEvent,
@@ -5,6 +6,7 @@ export type {
   EventHandler,
   EventOf,
   EventType,
+  ForwardOrigin,
   InboundEvent,
   MessageEvent,
   PhotoEvent,

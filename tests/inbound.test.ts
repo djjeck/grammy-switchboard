@@ -365,6 +365,108 @@ describe("messages and replies", () => {
     expect(store.messages.size).toBe(0);
   });
 
+  it("carries a message's and a reply's entities, hidden links included", async () => {
+    await store.recordMessage({
+      chatId: GROUP,
+      messageId: 5,
+      topic: "ops",
+      ref: "incident:1",
+      parentMessageId: null,
+    });
+    const entities = [{ type: "text_link", offset: 4, length: 4, url: "https://example.com" }];
+    const { bot } = setup();
+    await bot.handleUpdate(textUpdate("see docs", { entities }));
+    await bot.handleUpdate(textUpdate("see docs", { entities, ...parentOf(5) }));
+
+    expect(events).toEqual([
+      {
+        type: "message",
+        topic: "ops",
+        text: "see docs",
+        entities,
+        messageId: 10,
+        from: { id: "7", name: "Ada" },
+      },
+      {
+        type: "reply",
+        topic: "ops",
+        ref: "incident:1",
+        text: "see docs",
+        entities,
+        messageId: 10,
+        from: { id: "7", name: "Ada" },
+      },
+    ]);
+  });
+
+  it("names where a forward came from: a user, a bot, a hidden user, a group or a channel", async () => {
+    const origins = [
+      { type: "user", date: 1, sender_user: { id: 8, is_bot: false, first_name: "Grace" } },
+      {
+        type: "user",
+        date: 2,
+        sender_user: { id: 9, is_bot: true, first_name: "Alerts", username: "AlertsBot" },
+      },
+      { type: "hidden_user", date: 3, sender_user_name: "Someone" },
+      {
+        type: "chat",
+        date: 4,
+        sender_chat: { id: -100789, type: "supergroup", title: "Lab" },
+        author_signature: "Admin",
+      },
+      // Telegram always sends a group's title; a chat without one falls back to its id.
+      { type: "chat", date: 5, sender_chat: { id: 11, type: "private", first_name: "X" } },
+      {
+        type: "channel",
+        date: 6,
+        chat: { id: -100999, type: "channel", title: "News" },
+        message_id: 3,
+      },
+    ];
+    const { bot } = setup();
+    for (const forward_origin of origins) {
+      await bot.handleUpdate(textUpdate("fwd", { forward_origin }));
+    }
+
+    expect(events.map((event) => (event.type === "message" ? event.forwardedFrom : null))).toEqual([
+      { type: "user", id: "8", name: "Grace", isBot: false, date: 1 },
+      { type: "user", id: "9", name: "Alerts", isBot: true, date: 2 },
+      { type: "hidden_user", name: "Someone", date: 3 },
+      { type: "chat", id: "-100789", name: "Lab", authorSignature: "Admin", date: 4 },
+      { type: "chat", id: "11", name: "11", date: 5 },
+      { type: "channel", id: "-100999", name: "News", date: 6 },
+    ]);
+  });
+
+  it("names where a forwarded reply came from", async () => {
+    await store.recordMessage({
+      chatId: GROUP,
+      messageId: 5,
+      topic: "ops",
+      ref: "incident:1",
+      parentMessageId: null,
+    });
+    const { bot } = setup();
+    await bot.handleUpdate(
+      textUpdate("fwd", {
+        forward_origin: { type: "hidden_user", date: 3, sender_user_name: "Someone" },
+        ...parentOf(5),
+      }),
+    );
+
+    expect(events).toEqual([
+      {
+        type: "reply",
+        topic: "ops",
+        ref: "incident:1",
+        text: "fwd",
+        messageId: 10,
+        from: { id: "7", name: "Ada" },
+        forwardedFrom: { type: "hidden_user", name: "Someone", date: 3 },
+      },
+    ]);
+  });
+
   it("passes on messages, replies and photos with messages off, storing nothing", async () => {
     await store.recordMessage({
       chatId: GROUP,
@@ -582,6 +684,48 @@ describe("photos", () => {
         messageId: 20,
         mediaGroupId: "album1",
         from: { id: "7", name: "Ada" },
+      },
+    ]);
+  });
+
+  it("carries the caption's entities", async () => {
+    const captionEntities = [
+      { type: "text_link", offset: 4, length: 4, url: "https://example.com" },
+    ];
+    const { bot } = setup();
+    await bot.handleUpdate(photoUpdate({ caption: "the rack", caption_entities: captionEntities }));
+
+    expect(events).toEqual([
+      {
+        type: "photo",
+        topic: "ops",
+        ref: null,
+        fileId: "large",
+        caption: "the rack",
+        captionEntities,
+        messageId: 20,
+        from: { id: "7", name: "Ada" },
+      },
+    ]);
+  });
+
+  it("names where a forwarded photo came from", async () => {
+    const { bot } = setup();
+    await bot.handleUpdate(
+      photoUpdate({
+        forward_origin: { type: "hidden_user", date: 3, sender_user_name: "Someone" },
+      }),
+    );
+
+    expect(events).toEqual([
+      {
+        type: "photo",
+        topic: "ops",
+        ref: null,
+        fileId: "large",
+        messageId: 20,
+        from: { id: "7", name: "Ada" },
+        forwardedFrom: { type: "hidden_user", name: "Someone", date: 3 },
       },
     ]);
   });
