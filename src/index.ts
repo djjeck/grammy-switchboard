@@ -6,6 +6,7 @@ export type {
   EventHandler,
   EventOf,
   EventType,
+  ForwardOrigin,
   InboundEvent,
   MessageEvent,
   PhotoEvent,

@@ -151,6 +151,10 @@ the repository's secrets.
   link's URL is only in its `text_link` entity, so without them a handler that forwards text on
   loses every such link; `inlineLinks` writes them into the text as `[label](url)` for one that
   wants a string.
+- **A forward says where it came from.** `forwardedFrom` (`ForwardOrigin`) on `message`, `reply`
+  and `photo`, from Telegram's `forward_origin`: a user named exactly as a `Sender` is, so a
+  handler can recognize a forward from someone it knows, and `isBot`; a hidden user by name only;
+  a group or channel by chat id and title. `from` stays whoever forwarded it.
 - **Sending.** Text, a photo (a URL, a `file_id` or an `InputFile` upload), or an album of 2-10
   (captioned on its first photo, no buttons). Markdown is converted to Telegram HTML, which needs
   only `<`, `>` and `&` escaped, and resent as plain text if Telegram can't parse it. `replyTo` is

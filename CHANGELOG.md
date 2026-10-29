@@ -11,6 +11,9 @@ All notable changes to this project are documented here. The format follows
 - `entities` on `message` and `reply` events and `captionEntities` on `photo` events: Telegram's
   entities as sent, so a hidden link's URL (a `text_link`) reaches the handler (#3).
 - `inlineLinks(text, entities?)`, which writes each hidden link into the text as `[label](url)`.
+- `forwardedFrom` on `message`, `reply` and `photo` events: where a forward first came from (a
+  user, named as a `Sender` is and flagged if a bot, a hidden user, a group or a channel), as a
+  `ForwardOrigin`.
 
 ## [0.1.0] - 2026-10-27
 

@@ -11,6 +11,7 @@ import {
   type InlineKeyboardMarkup,
   type Message,
   type MessageEntity,
+  type MessageOrigin,
   type ReplyParameters,
   type User,
 } from "grammy/types";
@@ -20,6 +21,7 @@ import {
   type EventHandler,
   type EventOf,
   type EventType,
+  type ForwardOrigin,
   type InboundEvent,
   type Sender,
 } from "./events.js";
@@ -129,12 +131,45 @@ const DEFAULT_API_ROOT = "https://api.telegram.org";
 
 /** Who sent an update (see `Sender`); undefined when Telegram reports no sender. */
 function sender(user: User | undefined): Sender | undefined {
-  if (!user) {
-    return undefined;
-  }
+  return user && named(user);
+}
+
+/** A user as a `Sender`. */
+function named(user: User): Sender {
   const id = String(user.id);
   const fullName = [user.first_name, user.last_name].filter(Boolean).join(" ");
   return { id, name: fullName || user.username || id };
+}
+
+/** A forward's origin, named as a sender is; undefined for a message that isn't a forward. */
+function forwardOrigin(origin: MessageOrigin | undefined): ForwardOrigin | undefined {
+  switch (origin?.type) {
+    case undefined:
+      return undefined;
+    case "user":
+      return {
+        type: "user",
+        ...named(origin.sender_user),
+        isBot: origin.sender_user.is_bot,
+        date: origin.date,
+      };
+    case "hidden_user":
+      return { type: "hidden_user", name: origin.sender_user_name, date: origin.date };
+    case "chat":
+    case "channel": {
+      const chat = origin.type === "chat" ? origin.sender_chat : origin.chat;
+      const id = String(chat.id);
+      return {
+        type: origin.type,
+        id,
+        name: ("title" in chat && chat.title) || id,
+        ...(origin.author_signature === undefined
+          ? {}
+          : { authorSignature: origin.author_signature }),
+        date: origin.date,
+      };
+    }
+  }
 }
 
 /**
@@ -592,6 +627,7 @@ export class Switchboard<C extends Context = Context> implements MiddlewareObj<C
             entities: message.entities,
             messageId: message.message_id,
             from: sender(message.from),
+            forwardedFrom: forwardOrigin(message.forward_origin),
           }
         : {
             type: "message",
@@ -600,6 +636,7 @@ export class Switchboard<C extends Context = Context> implements MiddlewareObj<C
             entities: message.entities,
             messageId: message.message_id,
             from: sender(message.from),
+            forwardedFrom: forwardOrigin(message.forward_origin),
           };
       if (!this.#handles(event.type)) {
         return next();
@@ -628,6 +665,7 @@ export class Switchboard<C extends Context = Context> implements MiddlewareObj<C
         messageId: message.message_id,
         mediaGroupId: message.media_group_id,
         from: sender(message.from),
+        forwardedFrom: forwardOrigin(message.forward_origin),
       };
       return this.#deliver(event, ctx);
     });

@@ -15,6 +15,25 @@ export interface Sender {
   name: string;
 }
 
+/**
+ * Where a forwarded message first came from. A user's `id` and `name` are as for a `Sender`, so a
+ * forward from someone the bot knows can be recognized; a group's or channel's are its chat id
+ * and title. A user who hides their account when forwarded (`hidden_user`) has only the name
+ * Telegram shows.
+ */
+export interface ForwardOrigin {
+  type: "user" | "hidden_user" | "chat" | "channel";
+  /** The user's or chat's id; left out for a hidden user. */
+  id?: string;
+  name: string;
+  /** Whether the user is a bot; only for `user`. */
+  isBot?: boolean;
+  /** The author's signature on a channel post, or an anonymous group admin's message. */
+  authorSignature?: string;
+  /** When the original was sent, in Unix seconds. */
+  date: number;
+}
+
 /** A command the topic registered, typed at the start of a message (`/status`, `/status@Bot`). */
 export interface CommandEvent {
   type: "command";
@@ -44,6 +63,8 @@ export interface MessageEvent {
   entities?: MessageEntity[];
   messageId: number;
   from?: Sender;
+  /** Set when the message is a forward: where it first came from (`from` forwarded it). */
+  forwardedFrom?: ForwardOrigin;
 }
 
 /**
@@ -65,6 +86,8 @@ export interface ReplyEvent {
   entities?: MessageEntity[];
   messageId: number;
   from?: Sender;
+  /** Set when the message is a forward: where it first came from (`from` forwarded it). */
+  forwardedFrom?: ForwardOrigin;
 }
 
 /** A press of one of the switchboard's own inline buttons. */
@@ -97,6 +120,8 @@ export interface PhotoEvent {
   messageId: number;
   mediaGroupId?: string;
   from?: Sender;
+  /** Set when the photo is a forward, as for a message. */
+  forwardedFrom?: ForwardOrigin;
 }
 
 export type InboundEvent = CommandEvent | MessageEvent | ReplyEvent | ButtonEvent | PhotoEvent;
