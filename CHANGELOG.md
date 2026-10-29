@@ -4,7 +4,7 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project follows
 [Semantic Versioning](https://semver.org/); while it is on 0.x, a minor release may break the API.
 
-## [Unreleased]
+## [0.2.0] - 2026-10-29
 
 ### Added
 
@@ -45,4 +45,5 @@ The first release.
 - The `SwitchboardStore` interface, synchronous or asynchronous.
 - `grammy-switchboard/sqlite`: `SqliteStore` on `better-sqlite3`, an optional peer dependency.
 
+[0.2.0]: https://github.com/djjeck/grammy-switchboard/tree/v0.2.0
 [0.1.0]: https://github.com/djjeck/grammy-switchboard/tree/v0.1.0

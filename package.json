@@ -1,6 +1,6 @@
 {
   "name": "grammy-switchboard",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A grammY plugin that routes a bot's Telegram topics, replies and buttons to typed handlers",
   "license": "MIT",
   "author": "djjeck",
