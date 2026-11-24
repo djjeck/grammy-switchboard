@@ -13,6 +13,8 @@ describe("the package's main entry", () => {
       "ButtonTooLongError",
       "Switchboard",
       "UnknownTopicError",
+      "escapeHtml",
+      "htmlToPlain",
       "inlineLinks",
       "markdownToTelegramHtml",
       "silentLogger",

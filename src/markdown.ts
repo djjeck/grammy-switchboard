@@ -8,9 +8,7 @@
  * a list item gets a bullet, since Telegram has neither.
  */
 
-function escape(text: string): string {
-  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-}
+import { escapeHtml as escape } from "./html.js";
 
 /** Inline formatting of text that has no code in it (already escaped). */
 function inline(text: string): string {

@@ -4,6 +4,16 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project follows
 [Semantic Versioning](https://semver.org/); while it is on 0.x, a minor release may break the API.
 
+## [Unreleased]
+
+### Added
+
+- `format: "html"`: Telegram HTML written by the caller, sent as it is (for tags such as `<u>`
+  that Markdown can't express), and resent as plain text through `htmlToPlain` if Telegram
+  rejects it.
+- `escapeHtml(text)`, which escapes `&`, `<` and `>` for text put into such HTML, and
+  `htmlToPlain(html)`, which strips the tags and unescapes `&lt;`, `&gt;`, `&quot;` and `&amp;`.
+
 ## [0.2.0] - 2026-10-29
 
 ### Added

@@ -275,17 +275,17 @@ switchboard.on("message", (event) => save(inlineLinks(event.text, event.entities
 
 Sends a text message, a photo or an album to a topic.
 
-| Option    | Type                             |                                                                         |
-| --------- | -------------------------------- | ----------------------------------------------------------------------- |
-| `topic`   | `string`                         | Required.                                                               |
-| `text`    | `string`                         | The message, or a photo's caption (an album's, on its first photo).     |
-| `format`  | `"plain" \| "markdown"`          | Default `"plain"`. See [Formatting](#formatting).                       |
-| `photo`   | `Photo`                          | One photo, captioned with `text`.                                       |
-| `photos`  | `readonly Photo[]`               | One photo, or 2-10 sent as an album. Not with `photo`.                  |
-| `buttons` | `readonly (readonly Button[])[]` | Rows of inline buttons, `{ label, action }`. Not on an album.           |
-| `ref`     | `string`                         | What the message is about; carried by its buttons and by replies to it. |
-| `replyTo` | `number`                         | A message id in the same topic to reply to.                             |
-| `pin`     | `boolean`                        | Pin the message (an album's first) once sent, without a notification.   |
+| Option    | Type                              |                                                                         |
+| --------- | --------------------------------- | ----------------------------------------------------------------------- |
+| `topic`   | `string`                          | Required.                                                               |
+| `text`    | `string`                          | The message, or a photo's caption (an album's, on its first photo).     |
+| `format`  | `"plain" \| "markdown" \| "html"` | Default `"plain"`. See [Formatting](#formatting).                       |
+| `photo`   | `Photo`                           | One photo, captioned with `text`.                                       |
+| `photos`  | `readonly Photo[]`                | One photo, or 2-10 sent as an album. Not with `photo`.                  |
+| `buttons` | `readonly (readonly Button[])[]`  | Rows of inline buttons, `{ label, action }`. Not on an album.           |
+| `ref`     | `string`                          | What the message is about; carried by its buttons and by replies to it. |
+| `replyTo` | `number`                          | A message id in the same topic to reply to.                             |
+| `pin`     | `boolean`                         | Pin the message (an album's first) once sent, without a notification.   |
 
 A `Photo` is a URL Telegram fetches, a `file_id` it already has, or an `InputFile` upload.
 `replyTo` is sent with `allow_sending_without_reply`, so a deleted parent doesn't cost the
@@ -343,6 +343,22 @@ needs only `<`, `>` and `&` escaped, so Markdown written by people or models doe
 MarkdownV2's escaping rules. If Telegram still can't parse the result, the text is sent again as
 plain text, and a warning is logged. The converter is exported as
 `markdownToTelegramHtml(markdown): string`.
+
+With `format: "html"`, text is [Telegram HTML](https://core.telegram.org/bots/api#html-style)
+you wrote yourself (for tags Markdown has no syntax for, such as `<u>` underline), and is sent as
+it is. Escape any text you didn't write with `escapeHtml(text)`, which escapes `&`, `<` and `>`.
+If Telegram can't parse it, it is sent again as the text it shows, through
+`htmlToPlain(html)`: tags stripped, and `&lt;`, `&gt;`, `&quot;` and `&amp;` unescaped.
+
+```ts
+const name = "<<Dr. Fish>> & co";
+await switchboard.send({
+  topic: "ops",
+  photo: "https://example.com/menu.jpg",
+  text: `<u>Today:</u>\n<blockquote><b>${escapeHtml(name)}</b></blockquote>`,
+  format: "html",
+});
+```
 
 ### Logging
 
@@ -480,8 +496,8 @@ the next middleware untouched, so other plugins' buttons work alongside it.
 - **Files are fetched in-process**, so the bot token, which is in Telegram's download URL, never
   leaves it.
 - **The logger is injected**, silent by default.
-- **Markdown goes out as HTML** with a plain-text fallback: a formatting slip never costs the
-  message.
+- **Markdown goes out as HTML**, and so does the caller's own HTML, with a plain-text fallback: a
+  formatting slip never costs the message.
 - **No runtime dependencies.** `grammy` is a peer dependency, `better-sqlite3` an optional one.
 
 ## Compatibility

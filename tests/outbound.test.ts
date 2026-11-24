@@ -215,6 +215,38 @@ describe("send", () => {
     });
   });
 
+  it("sends HTML as it is, and as the text it shows if Telegram rejects it", async () => {
+    const switchboard = setup();
+    await switchboard.send({ topic: "ops", text: "<u>a</u> &lt;b&gt;", format: "html" });
+    expect(telegram.sendMessage).toHaveBeenLastCalledWith(
+      expect.objectContaining({ text: "<u>a</u> &lt;b&gt;", parse_mode: "HTML" }),
+    );
+
+    telegram.sendMessage
+      .mockResolvedValueOnce(new ApiFailure(400, "Bad Request: can't parse entities"))
+      .mockResolvedValueOnce({ message_id: 105 });
+    const result = await switchboard.send({
+      topic: "ops",
+      text: "<blockquote><b>x &amp; y</b></blockquote>",
+      format: "html",
+    });
+
+    expect(result.messageIds).toEqual([105]);
+    expect(telegram.sendMessage).toHaveBeenLastCalledWith({
+      chat_id: GROUP,
+      text: "x & y",
+      message_thread_id: 4,
+    });
+  });
+
+  it("sends an HTML photo caption with parse_mode HTML", async () => {
+    const switchboard = setup();
+    await switchboard.send({ topic: "ops", text: "<b>a &amp; b</b>", format: "html", photo: "id" });
+    expect(telegram.sendPhoto).toHaveBeenLastCalledWith(
+      expect.objectContaining({ caption: "<b>a &amp; b</b>", parse_mode: "HTML" }),
+    );
+  });
+
   it("sends plain text as is, and doesn't retry other failures", async () => {
     const switchboard = setup();
     await switchboard.send({ topic: "ops", text: "**done**", format: "plain" });

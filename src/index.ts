@@ -14,6 +14,7 @@ export type {
   Sender,
 } from "./events.js";
 export type { TextFormat } from "./format.js";
+export { escapeHtml, htmlToPlain } from "./html.js";
 export { type LogFields, type Logger, silentLogger } from "./logger.js";
 export { markdownToTelegramHtml } from "./markdown.js";
 export type { ButtonAction, StoredMessage, SwitchboardStore } from "./store.js";

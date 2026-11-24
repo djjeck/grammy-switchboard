@@ -21,7 +21,10 @@ src/
   store.ts         — the store interface (messages for lineage, stored buttons) and the lineage
                      walk over it
   sqlite.ts        — the `grammy-switchboard/sqlite` entry: SqliteStore on better-sqlite3
-  format.ts        — Markdown sent as Telegram HTML, resent as plain text if Telegram rejects it
+  format.ts        — Markdown or the caller's HTML sent as Telegram HTML, resent as plain text if
+                     Telegram rejects it
+  html.ts          — escapeHtml (for text put into the caller's HTML) and htmlToPlain (the text
+                     HTML shows, for the fallback)
   markdown.ts      — the Markdown → Telegram HTML converter
   errors.ts        — UnknownTopicError, ButtonTooLongError
   logger.ts        — the injected Logger interface and the silent default
@@ -157,7 +160,10 @@ the repository's secrets.
   a group or channel by chat id and title. `from` stays whoever forwarded it.
 - **Sending.** Text, a photo (a URL, a `file_id` or an `InputFile` upload), or an album of 2-10
   (captioned on its first photo, no buttons). Markdown is converted to Telegram HTML, which needs
-  only `<`, `>` and `&` escaped, and resent as plain text if Telegram can't parse it. `replyTo` is
+  only `<`, `>` and `&` escaped, and resent as plain text if Telegram can't parse it. With
+  `format: "html"` the caller writes the HTML (for underline, which Markdown has no syntax for:
+  `__x__` stays bold, as models write it), escaping others' text with `escapeHtml`; it is sent
+  as is, and resent as `htmlToPlain` of it (tags stripped, entities unescaped) if rejected. `replyTo` is
   sent as `reply_parameters` with `allow_sending_without_reply`, so a deleted parent doesn't cost
   the message. A send returns the message ids and, for each photo, the `file_id` Telegram
   assigned, so a caller can resend it without uploading again. An edit keeps the ref the message
