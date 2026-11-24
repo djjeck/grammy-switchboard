@@ -338,7 +338,8 @@ The middleware grammY runs; `bot.use(switchboard)` calls it for you.
 ### Formatting
 
 With `format: "markdown"`, text is converted to Telegram HTML: bold, italic, strikethrough, inline
-code, code blocks and links; a heading becomes a bold line and a list item gets a bullet. HTML
+code, code blocks, links and blockquotes (consecutive lines starting with `>` make one, with
+formatting inside); a heading becomes a bold line and a list item gets a bullet. HTML
 needs only `<`, `>` and `&` escaped, so Markdown written by people or models doesn't trip over
 MarkdownV2's escaping rules. If Telegram still can't parse the result, the text is sent again as
 plain text, and a warning is logged. The converter is exported as

@@ -13,6 +13,8 @@ All notable changes to this project are documented here. The format follows
   rejects it.
 - `escapeHtml(text)`, which escapes `&`, `<` and `>` for text put into such HTML, and
   `htmlToPlain(html)`, which strips the tags and unescapes `&lt;`, `&gt;`, `&quot;` and `&amp;`.
+- Blockquotes in Markdown: consecutive lines starting with `>` become one `<blockquote>`, with
+  inline formatting inside (not inside code blocks).
 
 ## [0.2.0] - 2026-10-29
 

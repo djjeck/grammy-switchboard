@@ -42,4 +42,16 @@ describe("markdownToTelegramHtml", () => {
       "<b>Status</b>\n• <b>Backup</b> — 15 min\n  • nested\n• plus",
     );
   });
+
+  it("turns consecutive > lines into one blockquote, formatted inside", () => {
+    expect(markdownToTelegramHtml("before\n> **one** <x>\n>two\n\n> three\nafter")).toBe(
+      "before\n<blockquote><b>one</b> &lt;x&gt;\ntwo</blockquote>\n\n<blockquote>three</blockquote>\nafter",
+    );
+  });
+
+  it("leaves > alone inside code, and mid-line", () => {
+    expect(markdownToTelegramHtml("```\n> not quoted\n```\na > b")).toBe(
+      "<pre>&gt; not quoted</pre>\na &gt; b",
+    );
+  });
 });

@@ -4,8 +4,8 @@
  * Telegram's own MarkdownV2 rejects a message unless a dozen characters (`.`, `-`, `!`, `(`, ...)
  * are escaped, which model output never does reliably. HTML needs only `<`, `>` and `&`
  * escaped, so a small Markdown subset is converted here and everything else is left as text:
- * bold, italic, strikethrough, inline code, code blocks, links; a heading becomes a bold line and
- * a list item gets a bullet, since Telegram has neither.
+ * bold, italic, strikethrough, inline code, code blocks, links, blockquotes; a heading becomes a
+ * bold line and a list item gets a bullet, since Telegram has neither.
  */
 
 import { escapeHtml as escape } from "./html.js";
@@ -57,6 +57,17 @@ export function markdownToTelegramHtml(markdown: string): string {
         i = end;
         continue;
       }
+    }
+    // A blockquote: consecutive lines starting with `>`, seen before escaping turns it into
+    // `&gt;`. Each line keeps its inline formatting.
+    if (lines[i]!.startsWith(">")) {
+      const quoted: string[] = [];
+      for (; i < lines.length && lines[i]!.startsWith(">"); i++) {
+        quoted.push(line(lines[i]!.replace(/^> ?/, "")));
+      }
+      i--;
+      out.push(`<blockquote>${quoted.join("\n")}</blockquote>`);
+      continue;
     }
     out.push(line(lines[i]!));
   }
